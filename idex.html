@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOL Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #f8f7f4;
+    --border: #e5e3dc;
+    --text: #1a1916;
+    --text2: #6b6860;
+    --text3: #9b9890;
+    --accent: #1a6b4a;
+    --accent-light: #e8f4ef;
+    --accent2: #c4813a;
+    --accent2-light: #fdf2e5;
+    --danger: #c43a3a;
+    --danger-light: #fde8e8;
+    --warning: #c4913a;
+    --warning-light: #fdf5e5;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px;
+    height: 60px;
+  }
+  .logo { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; color: var(--accent); white-space: nowrap; }
+  .logo span { color: var(--text); font-weight: 300; }
+  .header-search { flex: 1; position: relative; max-width: 440px; }
+  .header-search input {
+    width: 100%; padding: 9px 16px 9px 40px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 50px; font-family: inherit; font-size: 14px;
+    color: var(--text); outline: none; transition: all 0.2s;
+  }
+  .header-search input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-light); }
+  .header-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+  .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 50px; border: none;
+    font-family: inherit; font-size: 13.5px; font-weight: 500;
+    cursor: pointer; transition: all 0.18s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #145d3e; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,107,74,0.25); }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--surface2); }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+  /* TABS */
+  .tabs-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 20px; font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--text2); background: none; border: none; cursor: pointer;
+    border-bottom: 2.5px solid transparent; margin-bottom: -1px;
+    transition: all 0.15s; display: flex; align-items: center; gap: 7px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab-badge {
+    background: var(--surface2); color: var(--text2); border-radius: 50px;
+    font-size: 11px; font-weight: 700; padding: 2px 7px;
+  }
+  .tab-badge.green { background: var(--accent-light); color: var(--accent); }
+  .tab-badge.red { background: var(--danger-light); color: var(--danger); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* STATS */
+  .stats-bar { display: flex; gap: 12px; padding: 16px 24px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .stats-bar::-webkit-scrollbar { display: none; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 20px;
+    min-width: 140px; flex-shrink: 0;
+  }
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 24px; font-weight: 700; margin-top: 4px; letter-spacing: -0.5px; }
+  .stat-value.green { color: var(--accent); }
+  .stat-value.orange { color: var(--accent2); }
+  .stat-value.red { color: var(--danger); }
+
+  /* FILTERS */
+  .filters { padding: 0 24px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .filter-select {
+    padding: 8px 14px; border-radius: 50px; border: 1px solid var(--border);
+    background: var(--surface); font-family: inherit; font-size: 13.5px;
+    color: var(--text); cursor: pointer; outline: none;
+  }
+  .filter-select:focus { border-color: var(--accent); }
+  .filter-tag {
+    padding: 7px 14px; border-radius: 50px; border: 1px solid var(--border);
+    background: var(--surface); font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all 0.15s; font-weight: 500;
+  }
+  .filter-tag.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .results-count { font-size: 13px; color: var(--text2); margin-left: auto; white-space: nowrap; }
+
+  /* TABLE */
+  .table-wrap { padding: 0 24px 32px; overflow-x: auto; }
+  .inv-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 680px; }
+  .inv-table thead th {
+    padding: 10px 14px; font-size: 11.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px; color: var(--text2);
+    background: var(--surface); border-bottom: 2px solid var(--border);
+    text-align: left; white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  .inv-table thead th:hover { color: var(--text); }
+  .inv-table thead th.sort-asc::after { content: ' ↑'; }
+  .inv-table thead th.sort-desc::after { content: ' ↓'; }
+  .inv-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  .inv-table tbody tr:hover { background: var(--surface2); }
+  .inv-table tbody tr.low-stock { background: #fffbf0; }
+  .inv-table tbody tr.low-stock:hover { background: #fff8e6; }
+  .inv-table tbody tr.out-of-stock { background: #fff5f5; }
+  .inv-table tbody tr.out-of-stock:hover { background: #ffeeee; }
+  .inv-table td { padding: 11px 14px; font-size: 13.5px; vertical-align: middle; }
+  .item-name { font-weight: 500; color: var(--text); }
+  .item-sku { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--text3); margin-top: 2px; }
+  .cat-badge { display: inline-block; padding: 3px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text2); white-space: nowrap; }
+  .stock-num { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 600; }
+  .stock-num.ok { color: var(--accent); }
+  .stock-num.low { color: var(--warning); }
+  .stock-num.out { color: var(--danger); }
+  .unit-label { font-size: 11px; color: var(--text3); margin-left: 3px; }
+  .action-btns { display: flex; gap: 6px; align-items: center; }
+  .btn-stock-in {
+    padding: 5px 12px; border-radius: 50px; border: 1.5px solid var(--accent);
+    color: var(--accent); background: transparent; font-family: inherit;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-stock-in:hover { background: var(--accent); color: #fff; }
+  .btn-stock-out {
+    padding: 5px 12px; border-radius: 50px; border: 1.5px solid var(--danger);
+    color: var(--danger); background: transparent; font-family: inherit;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-stock-out:hover { background: var(--danger); color: #fff; }
+  .btn-edit-row {
+    padding: 5px 10px; border-radius: 50px; border: 1.5px solid var(--border);
+    color: var(--text2); background: transparent; font-family: inherit;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-edit-row:hover { border-color: var(--text2); color: var(--text); }
+
+  /* MOVEMENT LOG TAB */
+  .log-controls { padding: 16px 24px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .log-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; }
+  .log-table thead th {
+    padding: 10px 14px; font-size: 11.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px; color: var(--text2);
+    background: var(--surface); border-bottom: 2px solid var(--border);
+    text-align: left; white-space: nowrap;
+  }
+  .log-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .log-table tbody tr:hover { background: var(--surface2); }
+  .log-table td { padding: 11px 14px; font-size: 13.5px; vertical-align: middle; }
+  .log-type-in {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 50px; font-size: 12px; font-weight: 700;
+    background: var(--accent-light); color: var(--accent);
+  }
+  .log-type-out {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 50px; font-size: 12px; font-weight: 700;
+    background: var(--danger-light); color: var(--danger);
+  }
+  .log-qty-in { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--accent); font-size: 14px; }
+  .log-qty-out { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--danger); font-size: 14px; }
+  .log-timestamp { font-size: 12px; color: var(--text3); }
+  .log-empty { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .log-empty h3 { font-size: 18px; margin-bottom: 8px; }
+  .log-summary-bar { display: flex; gap: 12px; padding: 0 24px 14px; overflow-x: auto; }
+  .log-summary-bar::-webkit-scrollbar { display: none; }
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 18px; flex-shrink: 0; min-width: 130px;
+  }
+  .summary-card .s-label { font-size: 11.5px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+  .summary-card .s-val { font-size: 20px; font-weight: 700; margin-top: 3px; }
+
+  /* MODAL OVERLAY */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 200;
+    align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 18px;
+    padding: 28px; width: 100%; max-width: 500px;
+    box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto;
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn { from { transform: translateY(16px) scale(0.97); opacity: 0; } }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-grid { display: grid; gap: 14px; }
+  .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 14px; color: var(--text); background: var(--surface2);
+    outline: none; transition: all 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-light); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+  .span-2 { grid-column: 1 / -1; }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast { padding: 12px 22px; border-radius: 50px; background: var(--text); color: #fff; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toastIn 0.25s ease; white-space: nowrap; }
+  .toast.success { background: var(--accent); }
+  .toast.error { background: var(--danger); }
+  @keyframes toastIn { from { transform: translateY(12px); opacity: 0; } }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .empty-state h3 { font-size: 18px; margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+
+  .storage-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; background: var(--accent-light); border-bottom: 1px solid #c5e0d5; font-size: 13px; color: var(--accent); }
+  .storage-bar strong { font-weight: 600; }
+  .storage-bar .close-banner { margin-left: auto; cursor: pointer; color: var(--accent); background: none; border: none; font-size: 18px; line-height: 1; }
+
+  /* CLEAR LOG BUTTON */
+  .btn-ghost { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--danger); background: var(--danger-light); }
+
+  @media (max-width: 640px) {
+    .header { padding: 0 14px; height: 56px; }
+    .logo { font-size: 14px; }
+    .stats-bar, .log-summary-bar { padding: 12px 14px; gap: 10px; }
+    .stat-card, .summary-card { padding: 12px 16px; min-width: 120px; }
+    .stat-value { font-size: 20px; }
+    .filters, .log-controls { padding: 0 14px 12px; }
+    .table-wrap { padding: 0 14px 24px; }
+    .results-count { display: none; }
+    .header-search { max-width: 100%; }
+    .form-grid.cols-2 { grid-template-columns: 1fr; }
+    .modal { padding: 22px; }
+    .tabs-bar { padding: 0 14px; }
+    .tab-btn { padding: 12px 14px; font-size: 13px; }
+  }
+  @media (max-width: 480px) {
+    .hide-mobile { display: none; }
+    .header-right .btn span { display: none; }
+    .storage-bar { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="storage-bar" id="storageBanner">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span><strong>Multi-user sync:</strong> Export JSON → save to OneDrive/shared folder → others import to sync.</span>
+  <button class="close-banner" onclick="document.getElementById('storageBanner').style.display='none'">×</button>
+</div>
+
+<header class="header">
+  <div class="logo">SOL <span>Inventory</span></div>
+  <div class="header-search" id="headerSearchWrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Search by name, SKU, category…" oninput="renderTable()">
+  </div>
+  <div class="header-right">
+    <button class="btn btn-outline btn-sm" onclick="openExportModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Export</span>
+    </button>
+    <button class="btn btn-outline btn-sm" onclick="openImportModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>Import</span>
+    </button>
+    <button class="btn btn-primary" onclick="openAddModal()" id="addItemBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Add Item</span>
+    </button>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tab-inventory" onclick="switchTab('inventory')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Inventory
+  </button>
+  <button class="tab-btn" id="tab-movements" onclick="switchTab('movements')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    Stock Movements
+    <span class="tab-badge" id="movBadge">0</span>
+  </button>
+</div>
+
+<!-- ═══ TAB 1: INVENTORY ═══ -->
+<div class="tab-panel active" id="panel-inventory">
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="filters">
+    <select class="filter-select" id="categoryFilter" onchange="renderTable()"><option value="">All Categories</option></select>
+    <select class="filter-select" id="locationFilter" onchange="renderTable()"><option value="">All Locations</option></select>
+    <button class="filter-tag" id="fAll" onclick="setStockFilter('all')">All</button>
+    <button class="filter-tag" id="fLow" onclick="setStockFilter('low')">⚠ Low Stock</button>
+    <button class="filter-tag" id="fOut" onclick="setStockFilter('out')">🔴 Out of Stock</button>
+    <span class="results-count" id="resultsCount"></span>
+  </div>
+  <div class="table-wrap">
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th onclick="sortBy('name')">Product</th>
+          <th onclick="sortBy('category')" class="hide-mobile">Category</th>
+          <th onclick="sortBy('stock')">Stock</th>
+          <th onclick="sortBy('minStock')" class="hide-mobile">Min</th>
+          <th class="hide-mobile">Location</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div id="emptyState" class="empty-state" style="display:none">
+      <h3>No items found</h3><p>Try adjusting your search or filters.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 2: STOCK MOVEMENTS ═══ -->
+<div class="tab-panel" id="panel-movements">
+  <div class="log-summary-bar" id="logSummaryBar"></div>
+  <div class="log-controls">
+    <select class="filter-select" id="logTypeFilter" onchange="renderLog()">
+      <option value="">All Types</option>
+      <option value="in">Stock In only</option>
+      <option value="out">Stock Out only</option>
+    </select>
+    <select class="filter-select" id="logItemFilter" onchange="renderLog()">
+      <option value="">All Items</option>
+    </select>
+    <input type="date" id="logDateFilter" class="filter-select" onchange="renderLog()" style="border-radius:8px;">
+    <span class="results-count" id="logCount"></span>
+    <button class="btn btn-sm btn-ghost" onclick="clearLog()" style="margin-left:auto;">🗑 Clear Log</button>
+  </div>
+  <div class="table-wrap">
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Type</th>
+          <th>Product</th>
+          <th>SKU</th>
+          <th>Qty</th>
+          <th>Before</th>
+          <th>After</th>
+          <th class="hide-mobile">Note</th>
+        </tr>
+      </thead>
+      <tbody id="logBody"></tbody>
+    </table>
+    <div id="logEmpty" class="log-empty" style="display:none">
+      <h3>No movements yet</h3>
+      <p>Stock In / Stock Out actions will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Add New Item</div>
+    <div class="form-grid cols-2">
+      <div class="form-group span-2">
+        <label>Product Name *</label>
+        <input type="text" id="fName" placeholder="e.g. Alcohol Swab 100's">
+      </div>
+      <div class="form-group">
+        <label>SKU</label>
+        <input type="text" id="fSku" placeholder="C1110001">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" id="fCategory" list="catList" placeholder="C-EQUIPMENT">
+        <datalist id="catList"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Current Stock</label>
+        <input type="number" id="fStock" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Min Stock Level</label>
+        <input type="number" id="fMinStock" min="0" placeholder="5">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input type="text" id="fUnit" placeholder="PCS / BOX / BOTTLE">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="fLocation" list="locList" placeholder="CONSUMMABLE ROOM">
+        <datalist id="locList"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Cost Price (RM)</label>
+        <input type="number" id="fCostPrice" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Brand</label>
+        <input type="text" id="fBrand" placeholder="NO BRAND">
+      </div>
+      <div class="form-group span-2">
+        <label>Supplier</label>
+        <input type="text" id="fSupplier" placeholder="Supplier name">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('itemModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- STOCK IN/OUT MODAL -->
+<div class="modal-overlay" id="stockModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title" id="stockModalTitle">Stock In</div>
+    <div id="stockModalMeta" style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:18px;">
+      <div style="font-weight:600;font-size:14px;" id="stockModalName"></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px;" id="stockModalSku"></div>
+      <div style="margin-top:8px;display:flex;gap:16px;">
+        <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;">Current Stock</div><div style="font-size:18px;font-weight:700;" id="stockModalCurrent"></div></div>
+        <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;">Min Level</div><div style="font-size:18px;font-weight:700;color:var(--text2);" id="stockModalMin"></div></div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Quantity *</label>
+        <input type="number" id="stockQty" min="1" value="1" placeholder="Enter quantity">
+      </div>
+      <div class="form-group">
+        <label>Note (optional)</label>
+        <input type="text" id="stockNote" placeholder="e.g. Received from supplier">
+      </div>
+    </div>
+    <div id="stockPreview" style="margin-top:14px;padding:12px 14px;background:var(--surface2);border-radius:8px;font-size:13.5px;color:var(--text2);"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('stockModal')">Cancel</button>
+      <button class="btn btn-primary" id="stockConfirmBtn" onclick="confirmStock()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Export Inventory</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:20px;">Download the inventory as a JSON file. Save to OneDrive or a shared folder so others can import it to sync.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('exportModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="exportJSON()">Download JSON</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Import Inventory</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:16px;">Load a previously exported JSON file. This will <strong>merge</strong> with existing data.</p>
+    <div class="form-group">
+      <label>Select JSON File</label>
+      <input type="file" id="importFile" accept=".json" style="background:#fff;border:1px solid var(--border);padding:10px;border-radius:8px;">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('importModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="importJSON()">Import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─── SEED DATA (224 items) ────────────────────────────────────────────────────
+const SEED = [{"id":"C1110057","name":"(X) - GLUTHATIONE","sku":"C1110057","category":"C-INJECTION","location":"","stock":0,"minStock":2,"unit":"AMPOULE","costPrice":0.0,"brand":"NO BRAND","supplier":"SURIA HEALTH SYSTEMS SDN BHD"},{"id":"C1110180","name":"(X) - HF REVITAL CREAM","sku":"C1110180","category":"C-OTHERS","location":"","stock":0,"minStock":2,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"ADIPOLABS HEALTHCARE (M) SDN BHD"},{"id":"C1110176","name":"(X) - POLYBION INJ","sku":"C1110176","category":"C-INJECTION","location":"","stock":0,"minStock":25,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110002","name":"(X) 3 WAY STOPCOCK  BLUE","sku":"C1110002","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110170","name":"(X) CONSUMABLE ESSENTIAL OIL","sku":"C1110170","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NOW FOODS","supplier":"IHERB"},{"id":"C1110182","name":"2 OZ WHITE CAP JAR","sku":"C1110182","category":"CONSUMMABLE","location":"DISPENSARY-HOMEOPATHY","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"KIMIMAS ENTERPRISE SDN BHD"},{"id":"C1110162","name":"2G BLANKET (500G)","sku":"C1110162","category":"C-OTHERS","location":"DISPENSARY-HOMEOPATHY","stock":0,"minStock":3,"unit":"BOTTLE","costPrice":0.0,"brand":"DR MASOOD","supplier":"SELAT CARTA SDN BHD"},{"id":"C1110001","name":"3 PLY FACE MASK EAR LOOP","sku":"C1110001","category":"C-PPE","location":"CONSUMMABLE ROOM","stock":9,"minStock":10,"unit":"BOX","costPrice":15.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110003","name":"3 WAY STOPCOCK","sku":"C1110003","category":"C-EQUIPMENT","location":"","stock":1,"minStock":1,"unit":"BOX","costPrice":125.81,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110004","name":"3M BAIR HUGGER SENSOR X 25PCS","sku":"C1110004","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110234","name":"3M BAIR HUGGER TEMPERATURE MONITORING SYSTEM","sku":"C1110234","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":789.6,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110225","name":"3M BAIR HUGGER TEMPERATURE MONITORING SYSTEM","sku":"C1110225","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110161","name":"5G BLANKET (500G)","sku":"C1110161","category":"C-OTHERS","location":"DISPENSARY-HOMEOPATHY","stock":0,"minStock":3,"unit":"BOTTLE","costPrice":0.0,"brand":"DR MASOOD","supplier":"SELAT CARTA SDN BHD"},{"id":"C1110189","name":"5G DISKETTES (500G)","sku":"C1110189","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"SYARIKAT T.M SHAFI"},{"id":"C1110183","name":"75 ML AMBER GLASS JAR","sku":"C1110183","category":"CONSUMMABLE","location":"DISPENSARY-HOMEOPATHY","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"KIMIMAS ENTERPRISE SDN BHD"},{"id":"C1110184","name":"ADULT DIAPER 2000CC (10PCS)","sku":"C1110184","category":"C-EQUIPMENT","location":"CONSUMMABLE ROOM","stock":0,"minStock":1,"unit":"PCS","costPrice":0.0,"brand":"HUGHIE","supplier":"SHOPEE"},{"id":"C1110005","name":"AINMEDICARE HEPARINOL 5000IU/ML HEPARIN SODIUM INJECTION 5ML","sku":"C1110005","category":"C-EMERGENCY IV","location":"CONSUMMABLE ROOM","stock":30,"minStock":1,"unit":"PCS","costPrice":1.5,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110006","name":"AINMEDICARE INFUSOL W WATER FOR INJECTIONS BP 10ML","sku":"C1110006","category":"C-INJECTION","location":"","stock":39,"minStock":5,"unit":"PCS","costPrice":0.7,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110008","name":"ALCOHOL HAND RUB","sku":"C1110008","category":"C-SOLUTION (X)","location":"","stock":5,"minStock":4,"unit":"BOTTLE","costPrice":15.99,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110009","name":"ALCOHOL SWAB 100'S","sku":"C1110009","category":"C-EQUIPMENT","location":"","stock":17,"minStock":10,"unit":"BOX","costPrice":4.9,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110010","name":"AQUA CREAM ( HOMEOPATHY)","sku":"C1110010","category":"C-SOLUTION","location":"","stock":9,"minStock":10,"unit":"BOTTLE","costPrice":16.9,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110011","name":"ARTERY FORCEP 13CM","sku":"C1110011","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110012","name":"AVOMETER CHOLESTEROL TEST STRIP 10'S","sku":"C1110012","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":138.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110014","name":"BABY OIL","sku":"C1110014","category":"C-SOLUTION (X)","location":"","stock":2,"minStock":1,"unit":"BOTTLE","costPrice":5.8,"brand":"NO BRAND","supplier":"AA PHARMACY"},{"id":"C1110015","name":"BASIC DRESSING PACK","sku":"C1110015","category":"C-EQUIPMENT","location":"","stock":21,"minStock":20,"unit":"PCS","costPrice":2.9,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110235","name":"BBRAUN 0.45 SODIUM CHLORIDE 500ML","sku":"C1110235","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":4.8,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110209","name":"BBRAUN 0.9 SODIUM CHLORIDE 500ML","sku":"C1110209","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":4.8,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110207","name":"BBRAUN WATER FOR INJECTION 500ML","sku":"C1110207","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":9.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110218","name":"BD FLUNT NEEDLE 18G 1 1/2 100'S","sku":"C1110218","category":"C-NEEDLE","location":"","stock":2,"minStock":0,"unit":"BOX","costPrice":31.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110237","name":"BD GREEN NEEDLE 21G X 1.5","sku":"C1110237","category":"CONSUMMABLE","location":"","stock":1,"minStock":0,"unit":"BOX","costPrice":45.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110016","name":"BD Q STOPPER","sku":"C1110016","category":"C-EQUIPMENT","location":"","stock":0,"minStock":2,"unit":"BOX","costPrice":242.0,"brand":"NO BRAND","supplier":"DKSH MALAYSIA SDN BHD"},{"id":"C1110017","name":"BIBOTING - PRESSURE ADJUSTER","sku":"C1110017","category":"C-TCM (X)","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"BBT WELLNESS AND BEAUTY"},{"id":"C1110018","name":"BIBOTING H1 OIL","sku":"C1110018","category":"C-TCM (X)","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"BBT WELLNESS AND BEAUTY"},{"id":"C1110019","name":"BIBOTING H2 OIL","sku":"C1110019","category":"C-TCM (X)","location":"","stock":1,"minStock":1,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"BBT WELLNESS AND BEAUTY"},{"id":"C1110020","name":"BIBOTING H3 OIL","sku":"C1110020","category":"C-TCM (X)","location":"","stock":1,"minStock":1,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"BBT WELLNESS AND BEAUTY"},{"id":"C1110021","name":"BIBOTING H4 CREAM","sku":"C1110021","category":"C-TCM (X)","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110022","name":"BIBOTING LONG TUBE","sku":"C1110022","category":"C-TCM (X)","location":"","stock":0,"minStock":1,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110023","name":"BIBOTING SHORT TUBE","sku":"C1110023","category":"C-TCM (X)","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110024","name":"BIOHAZARD BAG 10L","sku":"C1110024","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110025","name":"BIOHAZARD BAG 30L","sku":"C1110025","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110026","name":"BLOOD LANCET 100'S","sku":"C1110026","category":"C-NEEDLE","location":"","stock":10,"minStock":2,"unit":"BOX","costPrice":12.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110027","name":"BUTTERFLY NEEDLE 21G (GREEN)","sku":"C1110027","category":"C-NEEDLE","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110013","name":"BUTTERFLY NEEDLE 23G (BLUE)","sku":"C1110013","category":"C-NEEDLE","location":"","stock":5,"minStock":2,"unit":"BOX","costPrice":58.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110028","name":"BUTTERFLY NEEDLE 23G (BLUE) - DEACTIVATED","sku":"C1110028","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110166","name":"BUTTERFLY NEEDLE 25G (ORANGE)","sku":"C1110166","category":"C-INJECTION","location":"","stock":2,"minStock":1,"unit":"BOX","costPrice":58.0,"brand":"TELFAST","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110029","name":"CALCIUM GLUCONATE X 10ML X 20/BOX","sku":"C1110029","category":"C-INJECTION","location":"","stock":52,"minStock":3,"unit":"AMPOULE","costPrice":13.75,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110030","name":"CANDLE 50PCS","sku":"C1110030","category":"C-COLON","location":"","stock":3,"minStock":1,"unit":"PACKET","costPrice":22.0,"brand":"NO BRAND","supplier":"IDEAL HOME HOUSEHOLD TRADING"},{"id":"C1110185","name":"CECAIR DD1 - MEMBERSIHKAN PERALATAN BEKAM","sku":"C1110185","category":"C-SOLUTION","location":"","stock":2,"minStock":1,"unit":"BOTTLE","costPrice":90.0,"brand":"NO BRAND","supplier":"NEO MEDICARE"},{"id":"C1110236","name":"CELL WELLBEING REPORT","sku":"C1110236","category":"CONSUMMABLE","location":"","stock":33,"minStock":10,"unit":"PCS","costPrice":125.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110031","name":"CLINICAL WIPES 200PCS","sku":"C1110031","category":"C-PPE","location":"","stock":2,"minStock":1,"unit":"PACKET","costPrice":35.29,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110032","name":"COFFEE ENEMA","sku":"C1110032","category":"C-COLON (X)","location":"","stock":4,"minStock":3,"unit":"PACKET","costPrice":48.35,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110193","name":"COSMOFER 50MG/ML","sku":"C1110193","category":"C-SOLUTION","location":"","stock":7,"minStock":0,"unit":"AMPOULE","costPrice":50.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110033","name":"COTTON BALL 0.5GM STERILE","sku":"C1110033","category":"C-EQUIPMENT","location":"","stock":0,"minStock":10,"unit":"PACKET","costPrice":1.9,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110034","name":"COTTON ROLL 500G","sku":"C1110034","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110221","name":"CREAM JAR 100G","sku":"C1110221","category":"CONSUMMABLE","location":"","stock":50,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"HYPER PLT"},{"id":"C1110220","name":"CREAM JAR 50G","sku":"C1110220","category":"CONSUMMABLE","location":"","stock":50,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"HYPER PLT"},{"id":"C1110035","name":"CREPE BANDAGE 10CM X 4.5M","sku":"C1110035","category":"C-EQUIPMENT","location":"","stock":16,"minStock":5,"unit":"PCS","costPrice":1.95,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110036","name":"CREPE BANDAGE 5CM X 4.5M","sku":"C1110036","category":"C-EQUIPMENT","location":"","stock":14,"minStock":2,"unit":"PCS","costPrice":1.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110192","name":"D5 DEXTROSE 5% IV BP - 250ML","sku":"C1110192","category":"CONSUMMABLE","location":"","stock":33,"minStock":0,"unit":"PCS","costPrice":3.8,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110037","name":"D5 DEXTROSE WATER 5% 500ML","sku":"C1110037","category":"C-INJECTION","location":"CONSUMMABLE ROOM","stock":15,"minStock":1,"unit":"PCS","costPrice":8.5,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110219","name":"DETOXIFICATION BODY & FOOT THERMAL BATH GEL","sku":"C1110219","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":130.0,"brand":"NEO MEDICARE","supplier":"NEO MEDICARE"},{"id":"C1110190","name":"DISKETTES 2G (500G)","sku":"C1110190","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"SYARIKAT T.M SHAFI"},{"id":"C1110086","name":"DISPOSABLE BED SHEET - BLUE","sku":"C1110086","category":"C-PPE","location":"","stock":2,"minStock":5,"unit":"PACKET","costPrice":48.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110038","name":"DISPOSABLE NEEDLE 18G PINK","sku":"C1110038","category":"C-NEEDLE","location":"","stock":5,"minStock":3,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110226","name":"DISPOSABLE NEEDLE 20G YELLOW","sku":"C1110226","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110039","name":"DISPOSABLE NEEDLE 21G GREEN","sku":"C1110039","category":"C-NEEDLE","location":"","stock":5,"minStock":3,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110040","name":"DISPOSABLE NEEDLE 23G BLUE","sku":"C1110040","category":"C-NEEDLE","location":"","stock":6,"minStock":3,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110227","name":"DISPOSABLE NEEDLE 26G BROWN","sku":"C1110227","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110041","name":"DISPOSABLE NEEDLE 27G X 1/2 GREY","sku":"C1110041","category":"C-NEEDLE","location":"","stock":2,"minStock":1,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110042","name":"DISPOSABLE NEEDLE 30G X 1/2 ORANGE","sku":"C1110042","category":"C-NEEDLE","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":11.2,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110043","name":"DISPOSABLE WHITE BED SHEET","sku":"C1110043","category":"C-PPE","location":"","stock":4,"minStock":5,"unit":"PACKET","costPrice":44.36,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110044","name":"DMSO 50ML - BRONSON","sku":"C1110044","category":"C-INJECTION (X)","location":"","stock":50,"minStock":5,"unit":"MILILITER","costPrice":3.15,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110198","name":"DNA/RNA SHIELD COLLECTION TUBE W/ SWAB 2ML X 50PACK","sku":"C1110198","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":1920.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110229","name":"DROPPER 100MLS","sku":"C1110229","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"KIMIMAS ENTERPRISE SDN BHD"},{"id":"C1110230","name":"DROPPER 50MLS","sku":"C1110230","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"KIMIMAS ENTERPRISE SDN BHD"},{"id":"C1110045","name":"EAR CLIP ELECTRODE","sku":"C1110045","category":"C-BRAIN TRAINER","location":"","stock":9,"minStock":0,"unit":"PCS","costPrice":23.84,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110046","name":"ECG PRINTED PAPER","sku":"C1110046","category":"C-HEART","location":"","stock":1,"minStock":1,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110047","name":"EDTA 20ML - BRONSON","sku":"C1110047","category":"C-INJECTION","location":"","stock":66,"minStock":5,"unit":"MILILITER","costPrice":2.575,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110168","name":"EECP CUFF","sku":"C1110168","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110048","name":"EECP LEAD - ECG (1PKT X 50)","sku":"C1110048","category":"C-HEART","location":"","stock":8,"minStock":5,"unit":"PACKET","costPrice":19.99,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110049","name":"ENEMA BAG","sku":"C1110049","category":"C-COLON","location":"","stock":4,"minStock":3,"unit":"PCS","costPrice":18.112,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110050","name":"ETHYCHLORIDE SPRAY","sku":"C1110050","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":2,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110051","name":"EWOT MASK","sku":"C1110051","category":"C-MASK","location":"","stock":0,"minStock":5,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110052","name":"EXTENSION T CONNECTOR W/NUT","sku":"C1110052","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"PCS","costPrice":190.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110053","name":"FORLEY CATHETHER 20G","sku":"C1110053","category":"C-CATHETHER","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":3500.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110054","name":"GCMAF","sku":"C1110054","category":"C-INJECTION","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110055","name":"GEMS DISINFECTANT 4KG (KLEENSO)","sku":"C1110055","category":"C-PPE (X)","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110056","name":"GINGER CREAM 500G","sku":"C1110056","category":"C-TCM (X)","location":"","stock":0,"minStock":1,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110167","name":"HALITE SALT","sku":"C1110167","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110058","name":"HDPE APRON DISPOSABLE","sku":"C1110058","category":"C-PPE","location":"","stock":7,"minStock":2,"unit":"PACKET","costPrice":35.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110196","name":"HF REVITAL CREAM","sku":"C1110196","category":"CONSUMMABLE","location":"","stock":5,"minStock":0,"unit":"TUBE","costPrice":51.3333,"brand":"NO BRAND","supplier":"ADIPOLABS HEALTHCARE (M) SDN BHD"},{"id":"C1110164","name":"HOMEOPATHY POTENCY","sku":"C1110164","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110059","name":"HUBER PLUS 19GA X 1 W/Y","sku":"C1110059","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110060","name":"HUBER PLUS 20GA X .75 W/Y","sku":"C1110060","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110061","name":"HYDROCOLON TUBING (LARGE)","sku":"C1110061","category":"C-COLON","location":"","stock":32,"minStock":250,"unit":"PCS","costPrice":6.8,"brand":"NO BRAND","supplier":"GUANGZHOU ICLEAR HEALTHCARE LIMITED"},{"id":"C1110062","name":"HYDROGEN MASK","sku":"C1110062","category":"C-MASK","location":"","stock":0,"minStock":2,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110063","name":"IDEALCARE SUCTION CATHETER WITH CLOSURE CAP","sku":"C1110063","category":"C-CATHETHER","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110064","name":"INFUSOL D50 DEXTROSE 5% INJECTION 5 X 10ML","sku":"C1110064","category":"C-INJECTION","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110065","name":"INSUGEN CARTRIDGES 5 X3ML","sku":"C1110065","category":"C-INJECTION","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110066","name":"IV CANNULA 20G - VASOFIX - BRANULLA","sku":"C1110066","category":"C-NEEDLE","location":"","stock":1,"minStock":1,"unit":"BOX","costPrice":210.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110067","name":"IV CANNULA 22G - VASOFIX (BLUE) - BRANULLA","sku":"C1110067","category":"C-NEEDLE","location":"","stock":6,"minStock":2,"unit":"BOX","costPrice":210.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110179","name":"IV TRANSFUSION SET WITHOUT FILTER (B.BRAUN)","sku":"C1110179","category":"C-INJECTION","location":"","stock":5,"minStock":2,"unit":"PCS","costPrice":4.13,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110186","name":"KIDS NEBULIZER MASK","sku":"C1110186","category":"CONSUMMABLE","location":"","stock":3,"minStock":5,"unit":"PCS","costPrice":6.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110177","name":"KIT (NK CELL TEST)","sku":"C1110177","category":"C-OTHERS","location":"","stock":0,"minStock":1,"unit":"TUBE","costPrice":0.0,"brand":"NO BRAND","supplier":"NISCELL"},{"id":"C1110068","name":"KY JELLY 100G","sku":"C1110068","category":"C-COLON (X)","location":"","stock":32,"minStock":25,"unit":"TUBE","costPrice":21.5,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110071","name":"L-CARNITINE 5G/5ML","sku":"C1110071","category":"C-INJECTION","location":"","stock":0,"minStock":1,"unit":"PCS","costPrice":2.8,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110069","name":"LANCING PEN","sku":"C1110069","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110070","name":"LATEX GLOVE (L) - DISPOSABLE","sku":"C1110070","category":"C-PPE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":26.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110187","name":"LATEX GLOVE (M) - DISPOSABLE","sku":"C1110187","category":"C-PPE","location":"","stock":0,"minStock":5,"unit":"BOX","costPrice":26.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110188","name":"LATEX GLOVE (S) - DISPOSABLE","sku":"C1110188","category":"C-PPE","location":"","stock":18,"minStock":10,"unit":"BOX","costPrice":26.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110173","name":"LIGNOCAINE 2% GEL 20G","sku":"C1110173","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"TUBE","costPrice":26.4,"brand":"AXCEL","supplier":"PHARMARISE SDN BHD"},{"id":"C1110072","name":"LIGNOICANE HYDROCHLORIDE INJ2%","sku":"C1110072","category":"C-EMERGENCY IV","location":"CONSUMMABLE ROOM","stock":23,"minStock":2,"unit":"PCS","costPrice":1.9,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110073","name":"LITTMAN STHETHOSCOPE","sku":"C1110073","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110224","name":"MACRO-CENTRIFUGE TUBE","sku":"C1110224","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110074","name":"MAGNESIUM CHLORIDE","sku":"C1110074","category":"C-INJECTION","location":"","stock":94,"minStock":5,"unit":"MILILITER","costPrice":0.075,"brand":"NO BRAND","supplier":"SURIA HEALTH SYSTEMS SDN BHD"},{"id":"C1110171","name":"MAGNESIUM SULFATE BRONSON","sku":"C1110171","category":"C-INJECTION","location":"","stock":0,"minStock":3,"unit":"MILIGRAM","costPrice":0.282,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110075","name":"METHYCOBAL INJECTION - B12 - 10 AMP/BOX 500MCG/ML","sku":"C1110075","category":"C-INJECTION","location":"","stock":82,"minStock":3,"unit":"AMPOULE","costPrice":6.3,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110231","name":"MICRO-CENTRIFUGE TUBE","sku":"C1110231","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110076","name":"MICROPORE (SURGICAL TAPE) ZIGZAG SILK","sku":"C1110076","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110077","name":"MICROPORE 1.25CM X 9M","sku":"C1110077","category":"C-EQUIPMENT (X)","location":"","stock":3,"minStock":5,"unit":"PCS","costPrice":2.92,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110078","name":"MICROPORE 2.5CM X 9M","sku":"C1110078","category":"C-EQUIPMENT (X)","location":"","stock":11,"minStock":12,"unit":"PCS","costPrice":2.92,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110194","name":"MICROPORE DISPENSER","sku":"C1110194","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":7.6675,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110163","name":"MOTHER TINCTURE","sku":"C1110163","category":"C-OTHERS","location":"DISPENSARY-HOMEOPATHY","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110079","name":"MOXA ROLL 100'S","sku":"C1110079","category":"C-TCM","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110197","name":"NASAL CANNULA - OXYGEN THERAPHY","sku":"C1110197","category":"CONSUMMABLE","location":"","stock":3,"minStock":0,"unit":"PCS","costPrice":6.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110080","name":"NASAL CANULLA - HYDROGEN THERAPY","sku":"C1110080","category":"C-MASK","location":"","stock":2,"minStock":5,"unit":"PCS","costPrice":30.0,"brand":"NO BRAND","supplier":"AAA GREENCELL"},{"id":"C1110081","name":"NEBULIZER MASK","sku":"C1110081","category":"C-MASK","location":"","stock":6,"minStock":5,"unit":"PCS","costPrice":6.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110082","name":"NELATON CATHETER","sku":"C1110082","category":"C-CATHETHER","location":"","stock":3,"minStock":2,"unit":"BOX","costPrice":90.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110083","name":"NEUROBION / MECOBALAMINE (B-COMPLEX)","sku":"C1110083","category":"C-INJECTION","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110084","name":"NITRILE EXAM GLOVE (POWERED) (L)","sku":"C1110084","category":"C-PPE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110085","name":"NITRILE EXAM GLOVE (POWERED) (M)","sku":"C1110085","category":"C-PPE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110178","name":"NK CELL TERAPHY KIT","sku":"C1110178","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NISCELL"},{"id":"D2220127","name":"NK CELL THERAPHY KIT","sku":"D2220127","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NISCELL"},{"id":"C1110087","name":"NON WOVEN FACE COVER","sku":"C1110087","category":"C-PPE","location":"","stock":4,"minStock":2,"unit":"PACKET","costPrice":7.8,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110088","name":"NS 0.45 SODIUM CHLORIDE 500ML","sku":"C1110088","category":"C-INJECTION","location":"","stock":16,"minStock":1,"unit":"PCS","costPrice":3.8,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110089","name":"NS 0.9 SODIUM CHLORIDE 1000ML","sku":"C1110089","category":"C-INJECTION","location":"","stock":0,"minStock":1,"unit":"PCS","costPrice":5.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110090","name":"NS 0.9 SODIUM CHLORIDE 100ML","sku":"C1110090","category":"C-INJECTION","location":"","stock":138,"minStock":5,"unit":"PCS","costPrice":3.95,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110228","name":"NS 0.9 SODIUM CHLORIDE 10ML","sku":"C1110228","category":"C-SOLUTION","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110091","name":"NS 0.9 SODIUM CHLORIDE 250ML / NACI 0.9% (NORMAL SALINE) 250ML","sku":"C1110091","category":"C-INJECTION","location":"","stock":25,"minStock":5,"unit":"PCS","costPrice":4.45,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110092","name":"NS 0.9 SODIUM CHLORIDE 500ML","sku":"C1110092","category":"C-INJECTION","location":"","stock":18,"minStock":5,"unit":"PCS","costPrice":4.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110093","name":"NUPREP GEL","sku":"C1110093","category":"C-BRAIN TRAINER (X)","location":"","stock":0,"minStock":3,"unit":"BOTTLE","costPrice":68.33,"brand":"NO BRAND","supplier":"MKS MEDIC SDN. BHD."},{"id":"C1110094","name":"OMNICAN 100 1ML 30G X 8MM - BLISTER BAG (10S X 10 /BOX)","sku":"C1110094","category":"C-SYRINGE","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":38.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110095","name":"ONE TOUCH GLUCOSE METER STRIP 25'S","sku":"C1110095","category":"C-EQUIPMENT","location":"","stock":2,"minStock":2,"unit":"BOX","costPrice":35.7,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110096","name":"OXYGEN MASK","sku":"C1110096","category":"C-MASK","location":"","stock":0,"minStock":5,"unit":"PCS","costPrice":7.5,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110097","name":"OZONOSAN - SET 4 PLUS","sku":"C1110097","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110199","name":"PAIN RELIEVE SPRAY","sku":"C1110199","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110098","name":"PETROLEUM JELLY (HOMEOPATHY)","sku":"C1110098","category":"C-SOLUTION","location":"","stock":9,"minStock":10,"unit":"BOTTLE","costPrice":17.8,"brand":"NO BRAND","supplier":"AA PHARMACY"},{"id":"C1110099","name":"PIC AQUABLOC WATERPROOF PLASTER ROUND","sku":"C1110099","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":12.5,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110223","name":"PIPETTE TIPS 1000 - BLUE","sku":"C1110223","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110232","name":"PIPETTE TIPS 1000 - BLUE","sku":"C1110232","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110233","name":"PIPETTE TIPS 200 - YELLOW","sku":"C1110233","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110222","name":"PIPETTE TIPS 200 - YELLOW","sku":"C1110222","category":"CONSUMMABLE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110100","name":"PLAIN GAUZE 5CM X 5CM","sku":"C1110100","category":"C-EQUIPMENT","location":"","stock":14,"minStock":10,"unit":"BOX","costPrice":3.8,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110101","name":"PLAIN GAUZE 7.5 X 7.5CM (24PLY)","sku":"C1110101","category":"C-EQUIPMENT","location":"","stock":2,"minStock":5,"unit":"BOX","costPrice":8.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110102","name":"PLAIN GAUZE ROLL","sku":"C1110102","category":"C-EQUIPMENT (X)","location":"","stock":3,"minStock":1,"unit":"PACKET","costPrice":65.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110103","name":"PLASTER 100'S","sku":"C1110103","category":"C-EQUIPMENT","location":"","stock":5,"minStock":2,"unit":"BOX","costPrice":5.8,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110195","name":"POLYBION INJ","sku":"C1110195","category":"C-INJECTION","location":"","stock":37,"minStock":0,"unit":"AMPOULE","costPrice":7.0,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110104","name":"POTASSIUM CHLORIDE 10% X 10 X 10ML","sku":"C1110104","category":"C-INJECTION","location":"","stock":61,"minStock":3,"unit":"AMPOULE","costPrice":1.25,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110105","name":"PROVIDIN - PROVIDONE 4L","sku":"C1110105","category":"C-SOLUTION (X)","location":"","stock":2,"minStock":1,"unit":"BOTTLE","costPrice":39.9,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110174","name":"PYRIDOXINE","sku":"C1110174","category":"C-INJECTION","location":"","stock":68,"minStock":1,"unit":"AMPOULE","costPrice":8.5,"brand":"NO BRAND","supplier":"UNI ALFA SOLUTIONS SUPPLIES (PREV. PROLEX MEDIC)"},{"id":"C1110106","name":"QFA CONDUCTIVITY 500ML","sku":"C1110106","category":"C-QFA (X)","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110107","name":"QFA ELECTRODE CLEANING 500ML","sku":"C1110107","category":"C-QFA (X)","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110108","name":"QFA ORP STANDARD 500ML","sku":"C1110108","category":"C-QFA (X)","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110109","name":"QFA TUBE","sku":"C1110109","category":"C-QFA","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110110","name":"RELIEF 0.2%","sku":"C1110110","category":"C-INJECTION","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110172","name":"RGCC BLOOD VIAL","sku":"C1110172","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110111","name":"RINGER LACTATE - HARTMAN'S 500ML","sku":"C1110111","category":"C-INJECTION","location":"","stock":24,"minStock":2,"unit":"PCS","costPrice":3.8,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110112","name":"RINSCAP SODIUM CHLORIDE (NORMAL SALINE) 500ML","sku":"C1110112","category":"C-SOLUTION","location":"","stock":0,"minStock":5,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110113","name":"SANNIMAX INSTANT HAND SANITIZER 5ML BLUE","sku":"C1110113","category":"C-PPE (X)","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110114","name":"SCISSORS FORCEP","sku":"C1110114","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110115","name":"SENSOR ELECTRODE","sku":"C1110115","category":"C-BRAIN TRAINER","location":"","stock":28,"minStock":5,"unit":"PCS","costPrice":11.92,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110116","name":"SERUMI ION GLOVES","sku":"C1110116","category":"C-GLOVE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110117","name":"SERUMI ION SOCKS","sku":"C1110117","category":"C-PPE","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110118","name":"SHARP BIN 10L","sku":"C1110118","category":"C-OTHERS","location":"","stock":3,"minStock":2,"unit":"PCS","costPrice":30.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110119","name":"SHARP BIN 20L","sku":"C1110119","category":"C-OTHERS","location":"","stock":5,"minStock":5,"unit":"PCS","costPrice":39.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110120","name":"SHARP BIN 5L","sku":"C1110120","category":"C-OTHERS","location":"","stock":0,"minStock":5,"unit":"PCS","costPrice":25.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110121","name":"SHOE COVER","sku":"C1110121","category":"C-PPE","location":"","stock":1,"minStock":1,"unit":"PACKET","costPrice":3.5,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110122","name":"SHOWER CAP - CLIP CAP","sku":"C1110122","category":"C-PPE","location":"","stock":1,"minStock":1,"unit":"PACKET","costPrice":3.8,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110123","name":"SODIUM BICARBONATE INJ 10ML","sku":"C1110123","category":"C-INJECTION","location":"","stock":39,"minStock":5,"unit":"PCS","costPrice":3.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110124","name":"SPO2 CABLE EECP AT OFFICE","sku":"C1110124","category":"C-HEART","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110125","name":"STANDARD SOLUTION PH 4","sku":"C1110125","category":"C-QFA","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110126","name":"STANDARD SOLUTION PH 7","sku":"C1110126","category":"C-QFA","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110127","name":"STERILE GAUZE SWAB 5X5CM 12PLY","sku":"C1110127","category":"C-EQUIPMENT","location":"","stock":0,"minStock":2,"unit":"PCS","costPrice":5.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110128","name":"STERILE GAUZE SWAB 7.5X7.5CM","sku":"C1110128","category":"C-EQUIPMENT","location":"","stock":0,"minStock":2,"unit":"PCS","costPrice":5.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110129","name":"STERILE SCISSOR S/S 13CM","sku":"C1110129","category":"C-EQUIPMENT (X)","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110130","name":"STERILE SURG.GLOVE SIZE 6.5","sku":"C1110130","category":"C-PPE","location":"","stock":1,"minStock":2,"unit":"BOX","costPrice":89.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110131","name":"STERILE SURG.GLOVE SIZE 7","sku":"C1110131","category":"C-PPE","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":89.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110132","name":"STERIPREP ANTISEPTIC SOLUTION 500 ML","sku":"C1110132","category":"C-SOLUTION (X)","location":"","stock":0,"minStock":3,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110133","name":"SURGICAL BLADE (CARBON STEEL)-12 100'S","sku":"C1110133","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":36.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110134","name":"SURGICAL SPIRIT ALCOHOL 75% 5 LITRE","sku":"C1110134","category":"C-SOLUTION (X)","location":"","stock":0,"minStock":2,"unit":"BOTTLE","costPrice":15.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110181","name":"SURGICAL SPIRIT ALCOHOL 95% 5 LITRE","sku":"C1110181","category":"C-SOLUTION (X)","location":"DISPENSARY","stock":0,"minStock":1,"unit":"BOTTLE","costPrice":15.0,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110135","name":"SYRINGE CATHETER TIP 50ML","sku":"C1110135","category":"C-SYRINGE","location":"","stock":1,"minStock":5,"unit":"BOX","costPrice":67.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110136","name":"SYRINGE W/LUER LOCK 10ML","sku":"C1110136","category":"C-SYRINGE","location":"","stock":1,"minStock":2,"unit":"BOX","costPrice":51.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110137","name":"SYRINGE W/LUER LOCK 20ML","sku":"C1110137","category":"C-SYRINGE","location":"","stock":2,"minStock":2,"unit":"BOX","costPrice":55.0,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110138","name":"SYRINGE W/LUER LOCK 3ML","sku":"C1110138","category":"C-SYRINGE","location":"","stock":3,"minStock":2,"unit":"BOX","costPrice":35.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110139","name":"SYRINGE W/LUER LOCK 50ML","sku":"C1110139","category":"C-SYRINGE","location":"","stock":1,"minStock":2,"unit":"BOX","costPrice":60.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110140","name":"SYRINGE W/LUER LOCK 5ML","sku":"C1110140","category":"C-SYRINGE","location":"","stock":2,"minStock":2,"unit":"BOX","costPrice":47.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110141","name":"TEGADERM 10CM X 12 CM 50PCS","sku":"C1110141","category":"C-EQUIPMENT","location":"","stock":0,"minStock":1,"unit":"PCS","costPrice":107.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110142","name":"TEGADERM 2 3/8 X 23/4 (1623W) - 6CM X 7CM","sku":"C1110142","category":"C-EQUIPMENT","location":"","stock":5,"minStock":2,"unit":"PCS","costPrice":149.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110143","name":"TEN 20 PASTE","sku":"C1110143","category":"C-BRAIN TRAINER (X)","location":"","stock":4,"minStock":3,"unit":"BOTTLE","costPrice":83.3333,"brand":"NO BRAND","supplier":"MKS MEDIC SDN. BHD."},{"id":"C1110144","name":"TERUMO METER COVER DISPOSABLE","sku":"C1110144","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":134.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"TESTING2","name":"TESTING - GLOVE","sku":"TESTING2","category":"C-OTHERS","location":"","stock":0,"minStock":5,"unit":"PCS","costPrice":0.0,"brand":"SOL","supplier":"NO SUPPLIER"},{"id":"TESTING3","name":"TESTING - SOLUTION","sku":"TESTING3","category":"C-OTHERS","location":"","stock":0,"minStock":2,"unit":"BOTTLE","costPrice":0.0,"brand":"SOL","supplier":"NO SUPPLIER"},{"id":"C1110169","name":"THERMOGRAPHY REPORT","sku":"C1110169","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"UNIT","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110145","name":"TOURNIQUET","sku":"C1110145","category":"C-EQUIPMENT","location":"","stock":2,"minStock":5,"unit":"PCS","costPrice":18.9,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110175","name":"TRANEXAMIC ACID INJ 100MG","sku":"C1110175","category":"C-EMERGENCY IV","location":"CONSUMMABLE ROOM","stock":0,"minStock":0,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110146","name":"TRANSFUSION SET (WITH FILTER) - IV TUBING - DRIP SET","sku":"C1110146","category":"C-INJECTION","location":"","stock":99,"minStock":5,"unit":"PCS","costPrice":3.5,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110147","name":"ULTRASOUND GEL 5L","sku":"C1110147","category":"C-HEART","location":"","stock":0,"minStock":1,"unit":"BOX","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110148","name":"UNDERPAD BLUE SHEET 30X30 - 25PCS /PACK","sku":"C1110148","category":"C-EQUIPMENT","location":"","stock":19,"minStock":5,"unit":"PACKET","costPrice":26.3333,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110149","name":"URINE BOTTLE","sku":"C1110149","category":"C-EQUIPMENT","location":"","stock":0,"minStock":0,"unit":"PACKET","costPrice":1.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110150","name":"VENOFER INJ 5 X 5ML","sku":"C1110150","category":"C-INJECTION","location":"","stock":0,"minStock":1,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110151","name":"VENTOLIN NEBULES 2.5MG / 2.5ML","sku":"C1110151","category":"C-SOLUTION","location":"","stock":0,"minStock":5,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110152","name":"VINYL GLOVE","sku":"C1110152","category":"C-GLOVE","location":"","stock":2,"minStock":2,"unit":"BOX","costPrice":12.5,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110153","name":"VIT D3 1ML (600 000 IU) - 15MG","sku":"C1110153","category":"C-INJECTION","location":"","stock":73,"minStock":4,"unit":"PCS","costPrice":21.6667,"brand":"NO BRAND","supplier":"SURIA HEALTH SYSTEMS SDN BHD"},{"id":"C1110007","name":"WATER FOR INJECTIONS BP 500ML","sku":"C1110007","category":"C-INJECTION","location":"","stock":19,"minStock":5,"unit":"PCS","costPrice":4.2,"brand":"NO BRAND","supplier":"PHARMARISE SDN BHD"},{"id":"C1110154","name":"WET TISSUE","sku":"C1110154","category":"C-EQUIPMENT","location":"","stock":7,"minStock":5,"unit":"PACKET","costPrice":2.23,"brand":"NO BRAND","supplier":"SHOPEE"},{"id":"C1110155","name":"WINGED SURECAN NON CORING NEEDLE 19G X 20MM BOX","sku":"C1110155","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":25.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110156","name":"WINGED SURECAN NON CORING NEEDLE 20G X 15MM","sku":"C1110156","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":25.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110157","name":"WINGED SURECAN NON CORING NEEDLE 20G X 20MM","sku":"C1110157","category":"C-NEEDLE","location":"","stock":0,"minStock":0,"unit":"BOX","costPrice":25.0,"brand":"NO BRAND","supplier":"MIKROMEDIK MEDICAL SUPPLY"},{"id":"C1110158","name":"WOODEN TONGUE DEPRESSOR","sku":"C1110158","category":"C-EQUIPMENT","location":"","stock":3,"minStock":3,"unit":"BOX","costPrice":4.9,"brand":"NO BRAND","supplier":"QMG MEDICAL SUPPLY"},{"id":"C1110165","name":"X-RAY CASSETTE TRAY","sku":"C1110165","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"PCS","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110159","name":"X-SAIKIN PRO 2L","sku":"C1110159","category":"C-SOLUTION (X)","location":"","stock":2,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110160","name":"X-SAIKIN PRO 500ML","sku":"C1110160","category":"C-SOLUTION (X)","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":0.0,"brand":"NO BRAND","supplier":"NO SUPPLIER"},{"id":"C1110191","name":"XX2GR BLANKETTES (500G)XX","sku":"C1110191","category":"C-OTHERS","location":"","stock":0,"minStock":0,"unit":"BOTTLE","costPrice":60.0,"brand":"DR MASOOD","supplier":"SYARIKAT T.M SHAFI"}];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let inventory = [];
+let movements = []; // {id, ts, type, itemId, itemName, sku, unit, qty, before, after, note}
+let editId = null;
+let stockAction = null;
+let stockItemId = null;
+let sortCol = 'name';
+let sortDir = 'asc';
+let stockFilter = 'all';
+let activeTab = 'inventory';
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  try { inventory = JSON.parse(localStorage.getItem('sol_inventory') || 'null') || SEED.map(i=>({...i})); } catch { inventory = SEED.map(i=>({...i})); }
+  try { movements = JSON.parse(localStorage.getItem('sol_movements') || '[]'); } catch { movements = []; }
+  populateFilters();
+  renderStats();
+  renderTable();
+  renderLogSummary();
+  updateMovBadge();
+  setStockFilter('all');
+}
+
+function save() {
+  localStorage.setItem('sol_inventory', JSON.stringify(inventory));
+  localStorage.setItem('sol_movements', JSON.stringify(movements));
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  // show/hide search bar (only for inventory tab)
+  document.getElementById('headerSearchWrap').style.display = tab === 'inventory' ? '' : 'none';
+  document.getElementById('addItemBtn').style.display = tab === 'inventory' ? '' : 'none';
+  if (tab === 'movements') { renderLog(); renderLogSummary(); }
+}
+
+function updateMovBadge() {
+  const badge = document.getElementById('movBadge');
+  badge.textContent = movements.length;
+  badge.className = 'tab-badge' + (movements.length > 0 ? ' green' : '');
+}
+
+// ─── FILTERS ──────────────────────────────────────────────────────────────────
+function populateFilters() {
+  const cats = [...new Set(inventory.map(i => i.category))].sort();
+  const locs = [...new Set(inventory.map(i => i.location).filter(Boolean))].sort();
+  document.getElementById('categoryFilter').innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option>${escHtml(c)}</option>`).join('');
+  document.getElementById('locationFilter').innerHTML = '<option value="">All Locations</option>' + locs.map(l=>`<option>${escHtml(l)}</option>`).join('');
+  document.getElementById('catList').innerHTML = cats.map(c=>`<option value="${escHtml(c)}">`).join('');
+  document.getElementById('locList').innerHTML = locs.map(l=>`<option value="${escHtml(l)}">`).join('');
+  // log item filter
+  const items = [...inventory].sort((a,b) => a.name.localeCompare(b.name));
+  document.getElementById('logItemFilter').innerHTML = '<option value="">All Items</option>' + items.map(i=>`<option value="${escHtml(i.id)}">${escHtml(i.name)}</option>`).join('');
+}
+
+function setStockFilter(f) {
+  stockFilter = f;
+  ['fAll','fLow','fOut'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById(f==='all'?'fAll':f==='low'?'fLow':'fOut').classList.add('active');
+  renderTable();
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const total = inventory.length;
+  const inStock = inventory.filter(i=>i.stock>0).length;
+  const low = inventory.filter(i=>i.minStock>0&&i.stock>0&&i.stock<i.minStock).length;
+  const out = inventory.filter(i=>i.stock===0).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">In Stock</div><div class="stat-value green">${inStock}</div></div>
+    <div class="stat-card"><div class="stat-label">Low Stock</div><div class="stat-value orange">${low}</div></div>
+    <div class="stat-card"><div class="stat-label">Out of Stock</div><div class="stat-value red">${out}</div></div>`;
+}
+
+// ─── LOG SUMMARY ─────────────────────────────────────────────────────────────
+function renderLogSummary() {
+  const totalIn = movements.filter(m=>m.type==='in').reduce((s,m)=>s+m.qty,0);
+  const totalOut = movements.filter(m=>m.type==='out').reduce((s,m)=>s+m.qty,0);
+  const todayStr = new Date().toISOString().slice(0,10);
+  const todayIn = movements.filter(m=>m.type==='in'&&m.ts.startsWith(todayStr)).reduce((s,m)=>s+m.qty,0);
+  const todayOut = movements.filter(m=>m.type==='out'&&m.ts.startsWith(todayStr)).reduce((s,m)=>s+m.qty,0);
+  document.getElementById('logSummaryBar').innerHTML = `
+    <div class="summary-card"><div class="s-label">Total Movements</div><div class="s-val">${movements.length}</div></div>
+    <div class="summary-card"><div class="s-label">Total Stock In</div><div class="s-val" style="color:var(--accent)">+${totalIn}</div></div>
+    <div class="summary-card"><div class="s-label">Total Stock Out</div><div class="s-val" style="color:var(--danger)">−${totalOut}</div></div>
+    <div class="summary-card"><div class="s-label">Today In</div><div class="s-val" style="color:var(--accent)">+${todayIn}</div></div>
+    <div class="summary-card"><div class="s-label">Today Out</div><div class="s-val" style="color:var(--danger)">−${todayOut}</div></div>`;
+}
+
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+function sortBy(col) {
+  if(sortCol===col) sortDir=sortDir==='asc'?'desc':'asc'; else{sortCol=col;sortDir='asc';}
+  renderTable();
+}
+
+function renderTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const cat = document.getElementById('categoryFilter').value;
+  const loc = document.getElementById('locationFilter').value;
+  let filtered = inventory.filter(item => {
+    const mQ = !q || item.name.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q) || item.category.toLowerCase().includes(q) || (item.supplier||'').toLowerCase().includes(q);
+    const mCat = !cat || item.category===cat;
+    const mLoc = !loc || item.location===loc;
+    const mStock = stockFilter==='all' ? true : stockFilter==='low' ? (item.minStock>0&&item.stock>0&&item.stock<item.minStock) : item.stock===0;
+    return mQ&&mCat&&mLoc&&mStock;
+  });
+  filtered.sort((a,b)=>{
+    let va=a[sortCol]??'', vb=b[sortCol]??'';
+    if(typeof va==='string') va=va.toLowerCase();
+    if(typeof vb==='string') vb=vb.toLowerCase();
+    return sortDir==='asc'?(va>vb?1:-1):(va<vb?1:-1);
+  });
+  document.getElementById('resultsCount').textContent = `${filtered.length} of ${inventory.length} items`;
+  const tbody = document.getElementById('tableBody');
+  if(!filtered.length){tbody.innerHTML='';document.getElementById('emptyState').style.display='block';return;}
+  document.getElementById('emptyState').style.display='none';
+  tbody.innerHTML = filtered.map(item=>{
+    const isOut=item.stock===0, isLow=!isOut&&item.minStock>0&&item.stock<item.minStock;
+    const rc=isOut?'out-of-stock':isLow?'low-stock':'', sc=isOut?'out':isLow?'low':'ok';
+    return `<tr class="${rc}">
+      <td><div class="item-name">${escHtml(item.name)}</div><div class="item-sku">${escHtml(item.sku)}</div></td>
+      <td class="hide-mobile"><span class="cat-badge">${escHtml(item.category)}</span></td>
+      <td><span class="stock-num ${sc}">${item.stock}</span><span class="unit-label">${escHtml(item.unit)}</span></td>
+      <td class="hide-mobile" style="color:var(--text2);font-size:13px;">${item.minStock>0?item.minStock+' '+escHtml(item.unit):'—'}</td>
+      <td class="hide-mobile" style="color:var(--text2);font-size:13px;">${item.location||'—'}</td>
+      <td><div class="action-btns">
+        <button class="btn-stock-in" onclick="openStockModal('${item.id}','in')">+ In</button>
+        <button class="btn-stock-out" onclick="openStockModal('${item.id}','out')">− Out</button>
+        <button class="btn-edit-row" onclick="openEditModal('${item.id}')">Edit</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── LOG TABLE ────────────────────────────────────────────────────────────────
+function renderLog() {
+  const type = document.getElementById('logTypeFilter').value;
+  const itemId = document.getElementById('logItemFilter').value;
+  const date = document.getElementById('logDateFilter').value;
+  let filtered = [...movements].reverse().filter(m => {
+    const mType = !type || m.type===type;
+    const mItem = !itemId || m.itemId===itemId;
+    const mDate = !date || m.ts.startsWith(date);
+    return mType&&mItem&&mDate;
+  });
+  document.getElementById('logCount').textContent = `${filtered.length} record${filtered.length!==1?'s':''}`;
+  const tbody = document.getElementById('logBody');
+  if(!filtered.length){tbody.innerHTML='';document.getElementById('logEmpty').style.display='block';return;}
+  document.getElementById('logEmpty').style.display='none';
+  tbody.innerHTML = filtered.map(m=>{
+    const d = new Date(m.ts);
+    const dateStr = d.toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+    const timeStr = d.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
+    const isIn = m.type==='in';
+    return `<tr>
+      <td><div style="font-weight:500;font-size:13.5px;">${dateStr}</div><div class="log-timestamp">${timeStr}</div></td>
+      <td><span class="${isIn?'log-type-in':'log-type-out'}">${isIn?'▲ IN':'▼ OUT'}</span></td>
+      <td><div style="font-weight:500;font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.itemName)}</div></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text3);">${escHtml(m.sku)}</span></td>
+      <td><span class="${isIn?'log-qty-in':'log-qty-out'}">${isIn?'+':'−'}${m.qty}</span><span class="unit-label">${escHtml(m.unit)}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);">${m.before}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;">${m.after}</td>
+      <td class="hide-mobile" style="font-size:13px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.note||'—')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function clearLog() {
+  if(!confirm('Clear all movement history? This cannot be undone.')) return;
+  movements = [];
+  save();
+  updateMovBadge();
+  renderLogSummary();
+  renderLog();
+  showToast('Movement log cleared', 'success');
+}
+
+// ─── ADD / EDIT ───────────────────────────────────────────────────────────────
+function openAddModal() {
+  editId=null;
+  document.getElementById('modalTitle').textContent='Add New Item';
+  ['fName','fSku','fCategory','fUnit','fLocation','fBrand','fSupplier'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fStock').value=0;
+  document.getElementById('fMinStock').value=0;
+  document.getElementById('fCostPrice').value='';
+  openModal('itemModal');
+}
+function openEditModal(id) {
+  const item=inventory.find(i=>i.id===id); if(!item) return;
+  editId=id;
+  document.getElementById('modalTitle').textContent='Edit Item';
+  document.getElementById('fName').value=item.name;
+  document.getElementById('fSku').value=item.sku;
+  document.getElementById('fCategory').value=item.category;
+  document.getElementById('fStock').value=item.stock;
+  document.getElementById('fMinStock').value=item.minStock;
+  document.getElementById('fUnit').value=item.unit;
+  document.getElementById('fLocation').value=item.location||'';
+  document.getElementById('fCostPrice').value=item.costPrice||'';
+  document.getElementById('fBrand').value=item.brand||'';
+  document.getElementById('fSupplier').value=item.supplier||'';
+  openModal('itemModal');
+}
+function saveItem() {
+  const name=document.getElementById('fName').value.trim();
+  if(!name){showToast('Product name is required','error');return;}
+  const sku=document.getElementById('fSku').value.trim()||('ITEM-'+Date.now());
+  const data={id:editId||sku,name,sku,
+    category:document.getElementById('fCategory').value.trim()||'Uncategorized',
+    stock:parseInt(document.getElementById('fStock').value)||0,
+    minStock:parseInt(document.getElementById('fMinStock').value)||0,
+    unit:document.getElementById('fUnit').value.trim()||'PCS',
+    location:document.getElementById('fLocation').value.trim(),
+    costPrice:parseFloat(document.getElementById('fCostPrice').value)||0,
+    brand:document.getElementById('fBrand').value.trim(),
+    supplier:document.getElementById('fSupplier').value.trim()};
+  if(editId){const idx=inventory.findIndex(i=>i.id===editId);if(idx>=0)inventory[idx]={...inventory[idx],...data};showToast('Item updated ✓','success');}
+  else{inventory.unshift(data);showToast('Item added ✓','success');}
+  save(); populateFilters(); renderStats(); renderTable(); closeModal('itemModal');
+}
+
+// ─── STOCK IN/OUT ─────────────────────────────────────────────────────────────
+function openStockModal(id, action) {
+  stockItemId=id; stockAction=action;
+  const item=inventory.find(i=>i.id===id); if(!item) return;
+  document.getElementById('stockModalTitle').textContent=action==='in'?'📦 Stock In':'📤 Stock Out';
+  document.getElementById('stockModalName').textContent=item.name;
+  document.getElementById('stockModalSku').textContent=item.sku;
+  const sc=item.stock===0?'color:var(--danger)':item.minStock>0&&item.stock<item.minStock?'color:var(--warning)':'color:var(--accent)';
+  document.getElementById('stockModalCurrent').innerHTML=`<span style="${sc}">${item.stock}</span> <span style="font-size:13px;font-weight:400;color:var(--text3)">${item.unit}</span>`;
+  document.getElementById('stockModalMin').textContent=item.minStock>0?item.minStock+' '+item.unit:'—';
+  document.getElementById('stockQty').value=1;
+  document.getElementById('stockNote').value='';
+  const btn=document.getElementById('stockConfirmBtn');
+  btn.textContent=action==='in'?'Add Stock':'Remove Stock';
+  btn.style.background=action==='in'?'var(--accent)':'var(--danger)';
+  updateStockPreview(item,1,action);
+  document.getElementById('stockQty').oninput=()=>{
+    const qty=parseInt(document.getElementById('stockQty').value)||0;
+    updateStockPreview(item,qty,action);
+  };
+  openModal('stockModal');
+  setTimeout(()=>document.getElementById('stockQty').focus(),120);
+}
+function updateStockPreview(item,qty,action) {
+  const after=action==='in'?item.stock+qty:item.stock-qty;
+  const ok=after>=0;
+  const col=after===0?'var(--danger)':item.minStock>0&&after<item.minStock?'var(--warning)':'var(--accent)';
+  document.getElementById('stockPreview').innerHTML=ok
+    ?`New stock level: <strong style="color:${col}">${after} ${item.unit}</strong>`
+    :`<span style="color:var(--danger)">⚠ Not enough stock (current: ${item.stock})</span>`;
+}
+function confirmStock() {
+  const qty=parseInt(document.getElementById('stockQty').value);
+  if(!qty||qty<1){showToast('Enter a valid quantity','error');return;}
+  const idx=inventory.findIndex(i=>i.id===stockItemId); if(idx<0) return;
+  const item=inventory[idx];
+  if(stockAction==='out'&&item.stock<qty){showToast('Not enough stock!','error');return;}
+  const before=item.stock;
+  if(stockAction==='in') inventory[idx].stock+=qty;
+  else inventory[idx].stock-=qty;
+  const after=inventory[idx].stock;
+  const note=document.getElementById('stockNote').value.trim();
+  movements.push({id:'M'+Date.now(),ts:new Date().toISOString(),type:stockAction,itemId:item.id,itemName:item.name,sku:item.sku,unit:item.unit,qty,before,after,note});
+  save(); renderStats(); renderTable(); updateMovBadge(); renderLogSummary();
+  showToast(stockAction==='in'?`+${qty} ${item.unit} added ✓`:`−${qty} ${item.unit} removed`,'success');
+  closeModal('stockModal');
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function openExportModal(){openModal('exportModal');}
+function openImportModal(){openModal('importModal');}
+function exportJSON(){
+  const data=JSON.stringify({inventory,movements},null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download=`SOL_Inventory_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('Exported! Save to OneDrive for sharing ✓','success');
+  closeModal('exportModal');
+}
+function importJSON(){
+  const file=document.getElementById('importFile').files[0];
+  if(!file){showToast('Please select a JSON file','error');return;}
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      // support both flat array (old) and {inventory,movements} (new)
+      const inv=Array.isArray(d)?d:(d.inventory||[]);
+      const movs=Array.isArray(d)?[]:(d.movements||[]);
+      let added=0,updated=0;
+      inv.forEach(item=>{
+        const idx=inventory.findIndex(i=>i.id===item.id);
+        if(idx>=0){inventory[idx]={...inventory[idx],...item};updated++;}
+        else{inventory.push(item);added++;}
+      });
+      // merge movements (avoid dupes by id)
+      movs.forEach(m=>{if(!movements.find(x=>x.id===m.id))movements.push(m);});
+      save(); populateFilters(); renderStats(); renderTable(); updateMovBadge(); renderLogSummary();
+      showToast(`Imported: ${added} new, ${updated} updated ✓`,'success');
+      closeModal('importModal');
+    }catch{showToast('Invalid JSON file','error');}
+  };
+  r.readAsText(file);
+}
+
+// ─── MODALS ───────────────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>closeModal(m.id));});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('searchInput').focus();}});
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg,type=''){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`; t.textContent=msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+function escHtml(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+init();
+</script>
+</body>
+</html>
